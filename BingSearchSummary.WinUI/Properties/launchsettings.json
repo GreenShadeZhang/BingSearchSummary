@@ -1,0 +1,10 @@
+﻿{
+    "profiles": {
+      "BingSearchSummary.WinUI (Package)": {
+        "commandName": "MsixPackage"
+      },
+      "BingSearchSummary.WinUI (Unpackaged)": {
+        "commandName": "Project"
+      }
+    }
+}

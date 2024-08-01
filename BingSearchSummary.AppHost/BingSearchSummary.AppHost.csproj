@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>f9f619a2-51ba-4142-9ecb-08a9648920b7</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BingSearchSummary.ApiService\BingSearchSummary.ApiService.csproj" />
+    <ProjectReference Include="..\BingSearchSummary.Web\BingSearchSummary.Web.csproj" />
+    <ProjectReference Include="..\BingSearchSummary.WinUI\BingSearchSummary.WinUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
