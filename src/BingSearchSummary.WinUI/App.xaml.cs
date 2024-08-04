@@ -90,6 +90,7 @@ public partial class App : Application
 
             var builder = Kernel.CreateBuilder();
 
+            //测试token被删除 已经无效 请换成自己的智普token
             builder.AddOpenAIChatCompletion(modelId: "GLM-4-Air", apiKey: "4827638425a6b9d48bea3b0599246ff2.pFjhEKShPOZE8OFd", httpClient: GetProxyClient("https://open.bigmodel.cn/api/paas/v4/chat/completions"));
 
             builder.Plugins.AddFromType<TimeInformationPlugin>();
