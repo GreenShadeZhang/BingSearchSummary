@@ -78,14 +78,21 @@ public partial class MainViewModel : ObservableRecipient
     {
         ProcessRingStatus = true;
         BingSearchList.Clear();
-
-        var list = await _apiClient.GetContentsAsync(Question);
-
-        foreach (var item in list)
+        try
         {
-            BingSearchList.Add(item);
-        }
+            var list = await _apiClient.GetContentsAsync(Question);
 
+            foreach (var item in list)
+            {
+                BingSearchList.Add(item);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            ProcessRingStatus = false;
+        }
         ProcessRingStatus = false;
     }
 
@@ -95,39 +102,47 @@ public partial class MainViewModel : ObservableRecipient
         _chatHistory.Clear();
 
         SummaryProcessRingStatus = true;
-
-        var arguments = new KernelArguments
+        try
         {
-            ["startTime"] = DateTimeOffset.Now.ToString("hh:mm:ss tt zz", CultureInfo.CurrentCulture),
+            var arguments = new KernelArguments
+            {
+                ["startTime"] = DateTimeOffset.Now.ToString("hh:mm:ss tt zz", CultureInfo.CurrentCulture),
 
-            ["userMessage"] = item.Snippet
-        };
+                ["userMessage"] = item.PageContent
+            };
 
-        var systemMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_systemPromptTemplate)
+            var systemMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_systemPromptTemplate)
+            {
+                TemplateFormat = "liquid",
+            }).RenderAsync(_kernel, arguments);
+
+            var userMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_userPromptTemplate)
+            {
+                TemplateFormat = "liquid",
+            }).RenderAsync(_kernel, arguments);
+
+            _chatHistory.AddSystemMessage(systemMessage);
+
+            _chatHistory.AddUserMessage(userMessage);
+
+
+            var chatResult = await _chatCompletionService.GetChatMessageContentAsync(_chatHistory, _openAIPromptExecutionSettings, _kernel);
+
+            SummaryResult = chatResult.ToString();
+
+            await _apiClient.PostContentsAsync(new BingSearchSummaryItem
+            {
+                Title = item.Title,
+                Summary = chatResult.ToString(),
+                Url = item.Url
+            });
+
+        }
+        catch (Exception ex)
         {
-            TemplateFormat = "liquid",
-        }).RenderAsync(_kernel, arguments);
-
-        var userMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_userPromptTemplate)
-        {
-            TemplateFormat = "liquid",
-        }).RenderAsync(_kernel, arguments);
-
-        _chatHistory.AddSystemMessage(systemMessage);
-
-        _chatHistory.AddUserMessage(userMessage);
-
-
-        var chatResult = await _chatCompletionService.GetChatMessageContentAsync(_chatHistory, _openAIPromptExecutionSettings, _kernel);
-
-        SummaryResult = chatResult.ToString();
-
-        await _apiClient.PostContentsAsync(new BingSearchSummaryItem
-        {
-            Title = item.Title,
-            Summary = chatResult.ToString(),
-            Url = item.Url
-        });
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            SummaryProcessRingStatus = false;
+        }
 
         SummaryProcessRingStatus = false;
     }

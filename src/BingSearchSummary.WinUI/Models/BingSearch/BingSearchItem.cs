@@ -21,4 +21,9 @@ public class BingSearchItem
     {
         get; set;
     } = string.Empty;
+
+    public string? PageContent
+    {
+        get; set;
+    }
 }
