@@ -24,4 +24,10 @@ public class BingSearchApiClient(HttpClient httpClient)
 
         return contentList?.ToArray() ?? [];
     }
+
+
+    public async Task PostContentsAsync(BingSearchSummaryItem content, CancellationToken cancellationToken = default)
+    {
+        await httpClient.PostAsJsonAsync("/summary", content, cancellationToken);
+    }
 }

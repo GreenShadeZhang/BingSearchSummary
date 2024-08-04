@@ -10,6 +10,7 @@ using BingSearchSummary.WinUI.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.PromptTemplates.Liquid;
 using Microsoft.UI.Xaml;
 
 namespace BingSearchSummary.WinUI;
@@ -89,11 +90,15 @@ public partial class App : Application
 
             var builder = Kernel.CreateBuilder();
 
-            builder.AddOpenAIChatCompletion(modelId: "GLM-4-Air", apiKey: "test", httpClient: GetProxyClient("https://open.bigmodel.cn/api/paas/v4/chat/completions"));
+            builder.AddOpenAIChatCompletion(modelId: "GLM-4-Air", apiKey: "4827638425a6b9d48bea3b0599246ff2.pFjhEKShPOZE8OFd", httpClient: GetProxyClient("https://open.bigmodel.cn/api/paas/v4/chat/completions"));
 
             builder.Plugins.AddFromType<TimeInformationPlugin>();
 
             services.AddSingleton(builder.Build());
+
+#pragma warning disable SKEXP0040 // 类型仅用于评估，在将来的更新中可能会被更改或删除。取消此诊断以继续。
+            services.AddSingleton<IPromptTemplateFactory, LiquidPromptTemplateFactory>();
+#pragma warning restore SKEXP0040 // 类型仅用于评估，在将来的更新中可能会被更改或删除。取消此诊断以继续。
         }).
         Build();
 

@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:BingSearchSummary.WinUI.Models"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:ic="using:Microsoft.Xaml.Interactions.Core"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Grid x:Name="ContentArea">
@@ -26,12 +28,16 @@
                 Margin="12"
                 Command="{x:Bind ViewModel.SearchCommand}"
                 Content="Search" />
+            <ProgressRing
+                Width="40"
+                Height="40"
+                IsActive="{x:Bind ViewModel.ProcessRingStatus, Mode=OneWay}" />
         </StackPanel>
         <StackPanel
             Grid.Row="1"
             HorizontalAlignment="Left"
             Orientation="Horizontal">
-            <StackPanel>
+            <StackPanel Margin="12">
                 <ListView
                     x:Name="BingSearchResultListView"
                     Width="350"
@@ -39,6 +45,7 @@
                     HorizontalAlignment="Left"
                     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
                     BorderThickness="1"
+                    Header="Search Results："
                     ItemsSource="{x:Bind ViewModel.BingSearchList, Mode=OneWay}">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="data:BingSearchItem">
@@ -54,28 +61,48 @@
                             </StackPanel>
                         </DataTemplate>
                     </ListView.ItemTemplate>
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem
+                                x:Name="Summary"
+                                Foreground="Green"
+                                Text="Summary and upload">
+                                <i:Interaction.Behaviors>
+                                    <ic:EventTriggerBehavior EventName="Click">
+                                        <ic:InvokeCommandAction Command="{x:Bind ViewModel.SummaryAndUploadCommand}" CommandParameter="{x:Bind BingSearchResultListView.SelectedItem, Mode=TwoWay}" />
+                                    </ic:EventTriggerBehavior>
+                                </i:Interaction.Behaviors>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
                 </ListView>
             </StackPanel>
-            <StackPanel>
-                <ListView
+            <StackPanel Margin="12">
+                <Border
                     Width="350"
                     Height="400"
-                    HorizontalAlignment="Left"
                     BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
-                    BorderThickness="1"
-                    ItemsSource="{x:Bind ViewModel.AiResultList, Mode=OneWay}">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <TextBlock
-                                Margin="12,6,0,0"
-                                Style="{ThemeResource BaseTextBlockStyle}"
-                                Text="{Binding}"
-                                TextWrapping="WrapWholeWords" />
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-            </StackPanel>
+                    BorderThickness="1">
+                    <Grid>
+                        <ProgressRing
+                            Width="40"
+                            Height="40"
+                            IsActive="{x:Bind ViewModel.SummaryProcessRingStatus, Mode=OneWay}" />
+                        <StackPanel>
+                            <TextBlock HorizontalAlignment="Left" Text="Summary Item Result:" />
+                            <ScrollViewer Height="360">
+                                <TextBlock
+                                    Margin="12"
+                                    HorizontalAlignment="Left"
+                                    IsTextSelectionEnabled="True"
+                                    Text="{x:Bind ViewModel.SummaryResult, Mode=OneWay}"
+                                    TextWrapping="WrapWholeWords" />
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Grid>
 
+                </Border>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

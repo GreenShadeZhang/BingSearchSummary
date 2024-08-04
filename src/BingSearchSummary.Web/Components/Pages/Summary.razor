@@ -1,0 +1,49 @@
+﻿@page "/summary"
+@attribute [StreamRendering(true)]
+@attribute [OutputCache(Duration = 5)]
+
+@inject SummaryApiClient SummaryApi
+
+<PageTitle>Summary</PageTitle>
+
+<h1>Summary</h1>
+
+<p>This component demonstrates showing data loaded from a backend API service.</p>
+
+@if (summarys == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Url</th>
+                <th>Summary</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var summary in summarys)
+            {
+                <tr>
+                    <td>@summary.CreateTime.ToShortTimeString()</td>
+                    <td>@summary.Title</td>
+                    <td>@summary.Url</td>
+                    <td>@summary.Summary</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private BingSearchSummaryItem[]? summarys;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summarys = await SummaryApi.GetSummaryAsync();
+    }
+}

@@ -30,17 +30,18 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/summarys", () =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
+    var summarys = Enumerable.Range(1, 5).Select(index =>
+        new BingSearchSummaryItem
+        {
+            CreateTime = DateTime.Now,
+            Summary = summaries[Random.Shared.Next(summaries.Length)],
+            Title = summaries[Random.Shared.Next(summaries.Length)],
+            Url = "https://www.bing.com"
+        })
         .ToArray();
-    return forecast;
+    return summarys;
 });
 
 // ...
@@ -98,11 +99,15 @@ app.MapGet("/search", async (string keyword) =>
     return result;
 });
 
+
+// ...
+
+app.MapPost("/summary", (BingSearchSummaryItem summary) =>
+{
+    // Save the summary to the database or perform any other necessary actions
+    // ...
+});
+
 app.MapDefaultEndpoints();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

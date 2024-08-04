@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using BingSearchSummary.WinUI.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,24 +16,43 @@ public partial class MainViewModel : ObservableRecipient
 
     private readonly Kernel _kernel;
 
-    private IChatCompletionService _chatCompletionService;
+    private readonly IChatCompletionService _chatCompletionService;
 
     // Enable auto function calling
-    OpenAIPromptExecutionSettings _openAIPromptExecutionSettings = new()
+    private readonly OpenAIPromptExecutionSettings _openAIPromptExecutionSettings = new()
     {
         ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
         Temperature = 0.9,
         TopP = 0.9,
     };
-    public MainViewModel(BingSearchApiClient apiClient, Kernel kernel)
+    private readonly IPromptTemplateFactory _promptTemplateFactory;
+    public MainViewModel(BingSearchApiClient apiClient, Kernel kernel, IPromptTemplateFactory promptTemplateFactory)
     {
         _apiClient = apiClient;
         _kernel = kernel;
 
         _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        _promptTemplateFactory = promptTemplateFactory;
+
+        //BingSearchList.Add(new BingSearchItem
+        //{
+        //    Title = Question,
+        //    Url = "https://www.bing.com/search?q=" + Question,
+        //    Snippet = "This is a snippet"
+        //});
     }
+
     [ObservableProperty]
     private string _question = string.Empty;
+
+    [ObservableProperty]
+    private string _summaryResult = string.Empty;
+
+    [ObservableProperty]
+    private bool _processRingStatus;
+
+    [ObservableProperty]
+    private bool _summaryProcessRingStatus;
 
 
     [ObservableProperty]
@@ -41,11 +61,22 @@ public partial class MainViewModel : ObservableRecipient
     [ObservableProperty]
     private ObservableCollection<string> _aiResultList = new();
 
-    ChatHistory chatHistory = [];
+    readonly ChatHistory _chatHistory = [];
+
+    readonly string _systemPromptTemplate = """
+            You are an AI assistant that You can summarize what users are sending.
+            The chat started at: {{ startTime }}
+            """;
+
+    readonly string _userPromptTemplate = """
+            User Content:
+            {{ userMessage }}
+            """;
 
     [RelayCommand]
     private async Task SearchAsync()
     {
+        ProcessRingStatus = true;
         BingSearchList.Clear();
 
         var list = await _apiClient.GetContentsAsync(Question);
@@ -55,17 +86,50 @@ public partial class MainViewModel : ObservableRecipient
             BingSearchList.Add(item);
         }
 
-        chatHistory.AddUserMessage(Question);
+        ProcessRingStatus = false;
+    }
 
-        var chatResult = await _chatCompletionService.GetChatMessageContentAsync(chatHistory, _openAIPromptExecutionSettings, _kernel);
+    [RelayCommand]
+    private async Task SummaryAndUploadAsync(BingSearchItem item)
+    {
+        _chatHistory.Clear();
 
-        AiResultList.Add(chatResult.ToString());
-        //BingSearchList.Add(new BingSearchItem
-        //{
-        //    Title = Question,
-        //    Url = "https://www.bing.com/search?q=" + Question,
-        //    Snippet = "This is a snippet"
-        //});
+        SummaryProcessRingStatus = true;
+
+        var arguments = new KernelArguments
+        {
+            ["startTime"] = DateTimeOffset.Now.ToString("hh:mm:ss tt zz", CultureInfo.CurrentCulture),
+
+            ["userMessage"] = item.Snippet
+        };
+
+        var systemMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_systemPromptTemplate)
+        {
+            TemplateFormat = "liquid",
+        }).RenderAsync(_kernel, arguments);
+
+        var userMessage = await _promptTemplateFactory.Create(new PromptTemplateConfig(_userPromptTemplate)
+        {
+            TemplateFormat = "liquid",
+        }).RenderAsync(_kernel, arguments);
+
+        _chatHistory.AddSystemMessage(systemMessage);
+
+        _chatHistory.AddUserMessage(userMessage);
+
+
+        var chatResult = await _chatCompletionService.GetChatMessageContentAsync(_chatHistory, _openAIPromptExecutionSettings, _kernel);
+
+        SummaryResult = chatResult.ToString();
+
+        await _apiClient.PostContentsAsync(new BingSearchSummaryItem
+        {
+            Title = item.Title,
+            Summary = chatResult.ToString(),
+            Url = item.Url
+        });
+
+        SummaryProcessRingStatus = false;
     }
 }
 
