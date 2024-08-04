@@ -1,8 +1,8 @@
-## .Net使用SemanticKernel调用智普清言LLM进行网页内容总结（使用Apire优雅的进行全栈开发）
+## 使用Aspire优雅的进行全栈开发——WinUI使用Semantic Kernel调用智普清言LLM总结WebAPI通过PlayWright解析的网页内容
 
 1. 完成Playwright页面内容提取api。
 2. 完成WinUI SemanticKernel集成
-3. 保存总结结果，待处理。】
+3. 保存总结结果
 
 整体功能待完善。。。。
 
